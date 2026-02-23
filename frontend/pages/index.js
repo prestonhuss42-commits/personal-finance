@@ -9,13 +9,15 @@ export default function Home(){
   const router = useRouter();
 
   async function login(){
-    const res = await axios.post('http://localhost:4000/api/auth/login', { email, password });
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const res = await axios.post(`${apiUrl}/api/auth/login`, { email, password });
     localStorage.setItem('token', res.data.token);
     router.push('/dashboard');
   }
 
   async function register(){
-    const res = await axios.post('http://localhost:4000/api/auth/register', { email, password });
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const res = await axios.post(`${apiUrl}/api/auth/register`, { email, password });
     localStorage.setItem('token', res.data.token);
     router.push('/dashboard');
   }

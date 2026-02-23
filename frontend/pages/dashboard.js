@@ -28,13 +28,15 @@ export default function Dashboard(){
   async function fetchExpenses(){
     const token = localStorage.getItem('token');
     if (!token) return;
-    const res = await axios.get('http://localhost:4000/api/expenses', { headers: { Authorization: `Bearer ${token}` } });
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const res = await axios.get(`${apiUrl}/api/expenses`, { headers: { Authorization: `Bearer ${token}` } });
     setExpenses(res.data);
   }
 
   async function deleteExpense(id){
     const token = localStorage.getItem('token');
-    await axios.delete(`http://localhost:4000/api/expenses/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    await axios.delete(`${apiUrl}/api/expenses/${id}`, { headers: { Authorization: `Bearer ${token}` } });
     fetchExpenses();
   }
 
@@ -55,7 +57,8 @@ export default function Dashboard(){
     if (!amount || Number(amount) <= 0) return alert('Enter a valid amount');
     if (!desc.trim()) return alert('Description required');
     const token = localStorage.getItem('token');
-    await axios.put(`http://localhost:4000/api/expenses/${editingExpense.id}`, { amount: Number(amount), description: desc, category }, { headers: { Authorization: `Bearer ${token}` } });
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    await axios.put(`${apiUrl}/api/expenses/${editingExpense.id}`, { amount: Number(amount), description: desc, category }, { headers: { Authorization: `Bearer ${token}` } });
     cancelEdit();
     fetchExpenses();
   }
@@ -71,7 +74,8 @@ export default function Dashboard(){
     if (!amount || Number(amount) <= 0) return alert('Enter a valid amount');
     if (!desc.trim()) return alert('Description required');
     const token = localStorage.getItem('token');
-    await axios.post('http://localhost:4000/api/expenses', { amount: Number(amount), description: desc, category }, { headers: { Authorization: `Bearer ${token}` } });
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    await axios.post(`${apiUrl}/api/expenses`, { amount: Number(amount), description: desc, category }, { headers: { Authorization: `Bearer ${token}` } });
     setAmount(''); setDesc(''); setCategory('misc');
     fetchExpenses();
   }
