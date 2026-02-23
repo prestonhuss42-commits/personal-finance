@@ -4,8 +4,10 @@ Minimal full-stack personal finance dashboard (starter) showing authentication, 
 
 *(Consider including a screenshot of the dashboard in your portfolio or GitHub README for visual impact.)*
 
+**[📘 Deployment Guide →](./DEPLOYMENT.md)** For production deployment to Railway (backend) and Vercel (frontend).
+
 Tech:
-- Backend: Node.js, Express, Prisma (SQLite by default)
+- Backend: Node.js, Express, Prisma (SQLite by default, PostgreSQL for production)
 - Frontend: Next.js + React
 
 Quick start (development):
