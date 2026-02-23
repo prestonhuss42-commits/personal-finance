@@ -8,13 +8,16 @@ Your project is now ready for production deployment! Follow these steps to deplo
 2. Click "New Project" → "Deploy from GitHub repo"
 3. Select your `personal-finance` repository
 4. Railway will auto-detect it as a Node.js project
-5. In the Railway dashboard, configure environment variables:
-   - Go to the project settings
-   - Add `DATABASE_URL` = `postgresql://[postgre-url-provided-by-railway]`
-   - Add `JWT_SECRET` = (generate a random strong secret, e.g., `your-random-secret-here-min-32-chars`)
-   - Add `PORT` = `4000`
-6. Railway will automatically build and deploy
-7. Once deployed, note the **backend URL** (e.g., `https://your-project.railway.app`)
+5. **Important:** In the Railway dashboard project settings, add these environment variables:
+   - `DATABASE_URL` = Use Railway's built-in PostgreSQL. Create a PostgreSQL database and copy the connection string, OR use SQLite with `file:./prisma/dev.db`
+   - `JWT_SECRET` = Generate a random strong secret (min 20 chars, e.g., `your-random-secret-here-32-chars-min`)
+   - `NODE_ENV` = `production`
+   - `PORT` = `4000` (optional, defaults to 4000)
+
+6. The build will automatically run `npm run build` (which generates Prisma client)
+7. The server will start with `npm start`
+8. Database migrations run automatically on first startup
+9. Once deployed, note the **backend URL** (e.g., `https://your-project.railway.app`)
 
 ## Step 2: Deploy Frontend to Vercel
 

@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
-    "build": "prisma migrate deploy",
+    "build": "prisma generate",
+    "postinstall": "prisma generate",
+    "setup": "prisma migrate dev --name init && node seed.js",
     "prisma": "prisma"
   },
   "dependencies": {

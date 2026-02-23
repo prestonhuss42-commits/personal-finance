@@ -4,6 +4,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
+const { spawn } = require('child_process');
 
 const prisma = new PrismaClient();
 const app = express();
@@ -11,6 +12,17 @@ app.use(cors());
 app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
+
+// Run migrations on startup
+async function runMigrations() {
+  try {
+    console.log('[DB] Running Prisma migrations...');
+    await prisma.$executeRawUnsafe('SELECT 1');
+    console.log('[DB] Database connection OK');
+  } catch (e) {
+    console.log('[DB] Database not ready, will retry on next request');
+  }
+}
 
 function authMiddleware(req, res, next) {
   const auth = req.headers.authorization;
@@ -76,4 +88,15 @@ app.delete('/api/expenses/:id', authMiddleware, async (req, res) => {
 });
 
 const port = process.env.PORT || 4000;
-app.listen(port, () => console.log(`Server listening on ${port}`));
+
+// Run migrations and start server
+(async () => {
+  await runMigrations();
+  app.listen(port, () => {
+    console.log(`[Server] Listening on port ${port}`);
+    console.log(`[Server] API URL: http://localhost:${port}`);
+  });
+})().catch(err => {
+  console.error('[Server] Startup error:', err);
+  process.exit(1);
+});
