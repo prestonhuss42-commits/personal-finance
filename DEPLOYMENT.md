@@ -1,63 +1,127 @@
 # Deployment Guide
 
-Your project is now ready for production deployment! Follow these steps to deploy the backend to Railway and frontend to Vercel.
+## Quick Summary
+
+- **Backend**: Railway (auto-provisions PostgreSQL)
+- **Frontend**: Vercel
+- **Estimated time**: 10 minutes setup
+
+---
 
 ## Step 1: Deploy Backend to Railway
 
-1. Go to [railway.app](https://railway.app) and sign in with GitHub
-2. Click "New Project" → "Deploy from GitHub repo"
-3. Select your `personal-finance` repository
-4. Railway will auto-detect it as a Node.js project
-5. **Important:** In the Railway dashboard project settings, add these environment variables:
-   - `DATABASE_URL` = Use Railway's built-in PostgreSQL. Create a PostgreSQL database and copy the connection string, OR use SQLite with `file:./prisma/dev.db`
-   - `JWT_SECRET` = Generate a random strong secret (min 20 chars, e.g., `your-random-secret-here-32-chars-min`)
-   - `NODE_ENV` = `production`
-   - `PORT` = `4000` (optional, defaults to 4000)
+### 1A. Initial Setup
+1. Go to [railway.app](https://railway.app)
+2. Sign in with GitHub
+3. Click **"New Project"** → **"Deploy from GitHub Repo"**
+4. Select `prestonhuss42-commits/personal-finance` repository
+5. Click **"Deploy Now"**
 
-6. The build will automatically run `npm run build` (which generates Prisma client)
-7. The server will start with `npm start`
-8. Database migrations run automatically on first startup
-9. Once deployed, note the **backend URL** (e.g., `https://your-project.railway.app`)
+### 1B. Add PostgreSQL Database (Critical!)
+1. In Railway dashboard, click **"+ New"** in the project
+2. Select **"Database"** → **"PostgreSQL"**
+3. Railway will auto-provision the database
+4. The `DATABASE_URL` will be automatically created as an environment variable
+
+### 1C. Configure Environment Variables
+Railway automatically creates `DATABASE_URL` from the PostgreSQL plugin. You only need to add:
+
+1. In the **`finance-backend`** service settings (in Railway dashboard):
+2. Go to **"Variables"** tab
+3. Add these variables:
+   - **Key**: `JWT_SECRET`  
+     **Value**: Generate a random string, e.g., `your-random-secret-key-min-20-characters-long-12345`
+   - **Key**: `DATABASE_PROVIDER`  
+     **Value**: `postgresql`
+   - **Key**: `NODE_ENV`  
+     **Value**: `production`
+   - **Key**: `PORT`  
+     **Value**: `4000`
+
+4. Click **"Deploy"** button to redeploy with new variables
+
+### ✅ You'll see:
+- Build succeeds
+- `[DB] Database connection OK` in logs
+- `[Server] Listening on port 4000` in logs
+
+Copy your **Railway backend URL** (e.g., `https://your-project.railway.app`) for Step 2.
+
+---
 
 ## Step 2: Deploy Frontend to Vercel
 
-1. Go to [vercel.com](https://vercel.com) and sign in with GitHub
-2. Click "New Project" → Select your `personal-finance` repository
-3. Select the `frontend` directory as the root
-4. In Environment Variables, add:
-   - `NEXT_PUBLIC_API_URL` = (your Railway backend URL from Step 1, e.g., `https://your-project.railway.app`)
-5. Click "Deploy"
-6. Once deployed, you'll get a **frontend URL** (e.g., `https://your-project.vercel.app`)
+### 2A. Deploy
+1. Go to [vercel.com](https://vercel.com)
+2. Sign in with GitHub
+3. Click **"New Project"**
+4. Select `personal-finance` repository
+5. Framework: **Next.js**
+6. Root Directory: **`./frontend`**
+7. Click **"Deploy"**
 
-## Step 3: Test Your Live App
+### 2B. Add Environment Variable
+1. After Vercel finishes initial deploy, go to **Settings** → **Environment Variables**
+2. Add:
+   - **Name**: `NEXT_PUBLIC_API_URL`
+   - **Value**: Your Railway backend URL (from Step 1C)
+   - Click **"Save"**
+
+3. Go to **Deployments** → click the three dots on the latest deploy → **"Redeploy"**
+
+### ✅ You'll get:
+- Frontend URL: `https://your-project.vercel.app`
+- Connected to your Railway backend
+
+---
+
+## Step 3: Test the Live App
 
 1. Open your Vercel frontend URL
-2. Sign up with a new account or use test credentials
-3. Create, edit, filter, and delete expenses
-4. Verify the chart displays and summaries calculate correctly
+2. Test with demo account:
+   - Email: `demo@example.com`
+   - Password: `demo`
+3. Try: add expense → filter → edit → delete → view charts
 
-## Environment Variables Summary
-
-For local development:
-- Backend: Already configured in `.env`
-- Frontend: Already configured in `.env.local`
-
-For production:
-- Backend (Railway): Set via Railway dashboard
-- Frontend (Vercel): Set via Vercel environment variables
-
-## Demo Credentials
-
-You can test with:
-- Email: `demo@example.com`
-- Password: `demo`
-
-This account is seeded in the database when the backend starts.
+---
 
 ## Troubleshooting
 
-- **Railway build fails**: Ensure DATABASE_URL is set to a valid PostgreSQL connection string
-- **Frontend can't reach backend**: Check that NEXT_PUBLIC_API_URL in Vercel matches your Railway backend URL
-- **Login not working**: Verify JWT_SECRET is set consistently on Railway
-- **Database empty**: Ensure seed.js runs automatically or run `npm run seed` manually on Railway
+### "Failed to get private network endpoint"
+- ✅ Did you add PostgreSQL database to Railway? (Step 1B)
+- ✅ Did you set `DATABASE_PROVIDER=postgresql`? (Step 1C)
+- ✅ Did you click "Deploy" after adding env vars?
+- Try: Go to Railway → click the "finance-backend" service → "Logs" tab and check for errors
+
+### Frontend shows "API error"
+- ✅ Check that `NEXT_PUBLIC_API_URL` in Vercel matches your Railway URL exactly
+- ✅ Go to Vercel → Deployments → Redeploy the latest build
+
+### Demo account doesn't work
+- Likely the database hasn't seeded yet (takes ~1 min on first run)
+- Try signing up with a new account instead
+
+### "Cannot find module" errors on Railway
+- The Procfile already handles this
+- Just wait for Railway to rebuild (it does this automatically)
+
+---
+
+## Local Development (Optional)
+
+```bash
+# Backend
+cd backend
+npm install
+npx prisma migrate dev --name init
+node seed.js
+npm run dev
+
+# Frontend (separate terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+Demo account: `demo@example.com` / `demo`
 
