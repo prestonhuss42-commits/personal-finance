@@ -87,6 +87,11 @@ app.delete('/api/expenses/:id', authMiddleware, async (req, res) => {
   res.json({ success: true });
 });
 
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'Personal Finance API is running' });
+});
+
 const port = process.env.PORT || 4000;
 
 // Run migrations and start server
