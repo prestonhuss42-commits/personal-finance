@@ -5,6 +5,15 @@ import dynamic from 'next/dynamic';
 import Layout from '../components/Layout';
 const Chart = dynamic(()=>import('../components/Chart'), { ssr: false });
 
+function getApiUrl() {
+  const configured = process.env.NEXT_PUBLIC_API_URL;
+  if (configured) return configured.replace(/\/$/, '');
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return 'https://personal-finance-e23w.onrender.com';
+  }
+  return 'http://localhost:4000';
+}
+
 export default function Dashboard(){
   const router = useRouter();
   const [expenses,setExpenses]=useState([]);
@@ -28,14 +37,14 @@ export default function Dashboard(){
   async function fetchExpenses(){
     const token = localStorage.getItem('token');
     if (!token) return;
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = getApiUrl();
     const res = await axios.get(`${apiUrl}/api/expenses`, { headers: { Authorization: `Bearer ${token}` } });
     setExpenses(res.data);
   }
 
   async function deleteExpense(id){
     const token = localStorage.getItem('token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = getApiUrl();
     await axios.delete(`${apiUrl}/api/expenses/${id}`, { headers: { Authorization: `Bearer ${token}` } });
     fetchExpenses();
   }
@@ -57,7 +66,7 @@ export default function Dashboard(){
     if (!amount || Number(amount) <= 0) return alert('Enter a valid amount');
     if (!desc.trim()) return alert('Description required');
     const token = localStorage.getItem('token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = getApiUrl();
     await axios.put(`${apiUrl}/api/expenses/${editingExpense.id}`, { amount: Number(amount), description: desc, category }, { headers: { Authorization: `Bearer ${token}` } });
     cancelEdit();
     fetchExpenses();
@@ -74,7 +83,7 @@ export default function Dashboard(){
     if (!amount || Number(amount) <= 0) return alert('Enter a valid amount');
     if (!desc.trim()) return alert('Description required');
     const token = localStorage.getItem('token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = getApiUrl();
     await axios.post(`${apiUrl}/api/expenses`, { amount: Number(amount), description: desc, category }, { headers: { Authorization: `Bearer ${token}` } });
     setAmount(''); setDesc(''); setCategory('misc');
     fetchExpenses();

@@ -3,6 +3,15 @@ import axios from 'axios';
 import { useRouter } from 'next/router';
 import Layout from '../components/Layout';
 
+function getApiUrl() {
+  const configured = process.env.NEXT_PUBLIC_API_URL;
+  if (configured) return configured.replace(/\/$/, '');
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return 'https://personal-finance-e23w.onrender.com';
+  }
+  return 'http://localhost:4000';
+}
+
 export default function Home(){
   const [email,setEmail]=useState('');
   const [password,setPassword]=useState('');
@@ -16,7 +25,7 @@ export default function Home(){
     }
     try {
       setSubmitting(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiUrl = getApiUrl();
       const res = await axios.post(`${apiUrl}/api/auth/login`, { email, password });
       localStorage.setItem('token', res.data.token);
       router.push('/dashboard');
@@ -35,7 +44,7 @@ export default function Home(){
     }
     try {
       setSubmitting(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiUrl = getApiUrl();
       const res = await axios.post(`${apiUrl}/api/auth/register`, { email, password });
       localStorage.setItem('token', res.data.token);
       router.push('/dashboard');
