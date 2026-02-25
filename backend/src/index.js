@@ -4,7 +4,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
-const { spawn } = require('child_process');
+const { execSync } = require('child_process');
 
 const prisma = new PrismaClient();
 const app = express();
@@ -16,11 +16,13 @@ const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 // Run migrations on startup
 async function runMigrations() {
   try {
-    console.log('[DB] Running Prisma migrations...');
+    console.log('[DB] Syncing database schema...');
+    execSync('npx prisma db push', { stdio: 'inherit' });
     await prisma.$executeRawUnsafe('SELECT 1');
     console.log('[DB] Database connection OK');
   } catch (e) {
-    console.log('[DB] Database not ready, will retry on next request');
+    console.error('[DB] Database setup failed', e.message);
+    throw e;
   }
 }
 
