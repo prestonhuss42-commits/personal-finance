@@ -9,6 +9,17 @@ export default function Home(){
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
 
+  async function authRequest(url, payload) {
+    try {
+      return await axios.post(url, payload, { timeout: 60000 });
+    } catch (err) {
+      const shouldRetry = !err?.response || err?.response?.status === 502;
+      if (!shouldRetry) throw err;
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      return axios.post(url, payload, { timeout: 60000 });
+    }
+  }
+
   async function login(){
     if (!email.trim() || !password.trim()) {
       alert('Email and password are required');
@@ -16,11 +27,11 @@ export default function Home(){
     }
     try {
       setSubmitting(true);
-      const res = await axios.post('/api/proxy/auth/login', { email, password });
+      const res = await authRequest('/api/proxy/auth/login', { email, password });
       localStorage.setItem('token', res.data.token);
       router.push('/dashboard');
     } catch (err) {
-      const message = err?.response?.data?.error || 'Login failed. Check API URL and try again.';
+      const message = err?.response?.data?.error || err?.message || 'Login failed. Please try again in a few seconds.';
       alert(message);
     } finally {
       setSubmitting(false);
@@ -34,11 +45,11 @@ export default function Home(){
     }
     try {
       setSubmitting(true);
-      const res = await axios.post('/api/proxy/auth/register', { email, password });
+      const res = await authRequest('/api/proxy/auth/register', { email, password });
       localStorage.setItem('token', res.data.token);
       router.push('/dashboard');
     } catch (err) {
-      const message = err?.response?.data?.error || 'Registration failed. Check API URL and try again.';
+      const message = err?.response?.data?.error || err?.message || 'Registration failed. Please try again in a few seconds.';
       alert(message);
     } finally {
       setSubmitting(false);

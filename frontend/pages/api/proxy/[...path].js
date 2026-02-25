@@ -15,12 +15,13 @@ export default async function handler(req, res) {
         Authorization: req.headers.authorization || undefined,
         'Content-Type': req.headers['content-type'] || 'application/json',
       },
+      timeout: 55000,
       validateStatus: () => true,
     });
 
     return res.status(response.status).json(response.data);
   } catch (error) {
     const message = error?.response?.data?.error || error?.message || 'Proxy request failed';
-    return res.status(502).json({ error: message });
+    return res.status(502).json({ error: message, target: targetUrl });
   }
 }
