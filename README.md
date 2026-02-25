@@ -1,6 +1,6 @@
 # Personal Finance Dashboard
 
-Minimal full-stack personal finance dashboard (starter) showing authentication, CRUD expenses, charts, and an API.  Styled for presentation, this project is suitable for showcasing on a portfolio or resume.
+full-stack personal finance dashboard showing authentication, CRUD expenses, charts, and an API. 
 
 
 **[📘 Deployment Guide →](./DEPLOYMENT.md)** For production deployment to Railway (backend) and Vercel (frontend).
