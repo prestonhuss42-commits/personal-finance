@@ -18,19 +18,26 @@ export default async function handler(req, res) {
   const backendUrl = getBackendUrl();
   const path = Array.isArray(req.query.path) ? req.query.path.join('/') : req.query.path;
   const targetUrl = `${backendUrl}/api/${path}`;
+  const method = (req.method || 'GET').toUpperCase();
+  const methodAllowsBody = !['GET', 'HEAD'].includes(method);
+  const hasBody = methodAllowsBody && req.body !== undefined && req.body !== null && !(typeof req.body === 'object' && Object.keys(req.body).length === 0);
 
   let lastError;
   let lastResponse;
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
+      const headers = {
+        Authorization: req.headers.authorization || undefined,
+      };
+      if (hasBody) {
+        headers['Content-Type'] = req.headers['content-type'] || 'application/json';
+      }
+
       const response = await axios({
-        method: req.method,
+        method,
         url: targetUrl,
-        data: req.body,
-        headers: {
-          Authorization: req.headers.authorization || undefined,
-          'Content-Type': req.headers['content-type'] || 'application/json',
-        },
+        data: hasBody ? req.body : undefined,
+        headers,
         timeout: 90000,
         validateStatus: () => true,
       });
