@@ -31,7 +31,9 @@ export default function Home(){
       localStorage.setItem('token', res.data.token);
       router.push('/dashboard');
     } catch (err) {
-      const message = err?.response?.data?.error || err?.message || 'Login failed. Please try again in a few seconds.';
+      const base = err?.response?.data?.error || err?.message || 'Login failed. Please try again in a few seconds.';
+      const target = err?.response?.data?.target;
+      const message = target ? `${base}\nTarget: ${target}` : base;
       alert(message);
     } finally {
       setSubmitting(false);
@@ -49,7 +51,9 @@ export default function Home(){
       localStorage.setItem('token', res.data.token);
       router.push('/dashboard');
     } catch (err) {
-      const message = err?.response?.data?.error || err?.message || 'Registration failed. Please try again in a few seconds.';
+      const base = err?.response?.data?.error || err?.message || 'Registration failed. Please try again in a few seconds.';
+      const target = err?.response?.data?.target;
+      const message = target ? `${base}\nTarget: ${target}` : base;
       alert(message);
     } finally {
       setSubmitting(false);

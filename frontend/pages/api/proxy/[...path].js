@@ -1,27 +1,53 @@
 import axios from 'axios';
 
-const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || 'https://personal-finance-e23w.onrender.com').replace(/\/$/, '');
+const DEFAULT_BACKEND_URL = 'https://personal-finance-e23w.onrender.com';
+
+function getBackendUrl() {
+  const configured = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL;
+  if (!configured) return DEFAULT_BACKEND_URL;
+  const normalized = configured.replace(/\/$/, '');
+  if (normalized.includes('localhost')) return DEFAULT_BACKEND_URL;
+  return normalized;
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 export default async function handler(req, res) {
+  const backendUrl = getBackendUrl();
   const path = Array.isArray(req.query.path) ? req.query.path.join('/') : req.query.path;
-  const targetUrl = `${BACKEND_URL}/api/${path}`;
+  const targetUrl = `${backendUrl}/api/${path}`;
 
-  try {
-    const response = await axios({
-      method: req.method,
-      url: targetUrl,
-      data: req.body,
-      headers: {
-        Authorization: req.headers.authorization || undefined,
-        'Content-Type': req.headers['content-type'] || 'application/json',
-      },
-      timeout: 55000,
-      validateStatus: () => true,
-    });
+  let lastError;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const response = await axios({
+        method: req.method,
+        url: targetUrl,
+        data: req.body,
+        headers: {
+          Authorization: req.headers.authorization || undefined,
+          'Content-Type': req.headers['content-type'] || 'application/json',
+        },
+        timeout: 90000,
+        validateStatus: () => true,
+      });
 
-    return res.status(response.status).json(response.data);
-  } catch (error) {
-    const message = error?.response?.data?.error || error?.message || 'Proxy request failed';
-    return res.status(502).json({ error: message, target: targetUrl });
+      if (response.status < 500) {
+        return res.status(response.status).json(response.data);
+      }
+
+      lastError = new Error(`Upstream returned ${response.status}`);
+    } catch (error) {
+      lastError = error;
+    }
+
+    if (attempt < 3) {
+      await sleep(2000 * attempt);
+    }
   }
+
+  const message = lastError?.response?.data?.error || lastError?.message || 'Proxy request failed';
+  return res.status(502).json({ error: message, target: targetUrl });
 }
