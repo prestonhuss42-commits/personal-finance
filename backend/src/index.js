@@ -42,6 +42,40 @@ async function runMigrations() {
   return false;
 }
 
+async function ensureTables() {
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "User" (
+        "id" SERIAL PRIMARY KEY,
+        "email" TEXT NOT NULL UNIQUE,
+        "password" TEXT NOT NULL,
+        "name" TEXT,
+        "role" TEXT NOT NULL DEFAULT 'user',
+        "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "Expense" (
+        "id" SERIAL PRIMARY KEY,
+        "userId" INTEGER NOT NULL REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+        "amount" DOUBLE PRECISION NOT NULL,
+        "description" TEXT NOT NULL,
+        "category" TEXT NOT NULL,
+        "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS "Expense_userId_idx" ON "Expense"("userId");
+    `);
+
+    console.log('[DB] Required tables verified');
+  } catch (e) {
+    console.error('[DB] Failed to ensure tables:', e.message);
+  }
+}
+
 function authMiddleware(req, res, next) {
   const auth = req.headers.authorization;
   if (!auth) return res.status(401).json({ error: 'Missing auth header' });
@@ -124,6 +158,8 @@ const port = process.env.PORT || 4000;
   const dbReady = await runMigrations();
   if (!dbReady) {
     console.warn('[DB] Starting API without an active DB connection. Auth/expense routes will fail until DB is reachable.');
+  } else {
+    await ensureTables();
   }
   app.listen(port, () => {
     console.log(`[Server] Listening on port ${port}`);
