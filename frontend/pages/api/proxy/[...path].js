@@ -19,8 +19,13 @@ export default async function handler(req, res) {
   const path = Array.isArray(req.query.path) ? req.query.path.join('/') : req.query.path;
   const targetUrl = `${backendUrl}/api/${path}`;
   const method = (req.method || 'GET').toUpperCase();
-  const methodAllowsBody = !['GET', 'HEAD'].includes(method);
-  const hasBody = methodAllowsBody && req.body !== undefined && req.body !== null && !(typeof req.body === 'object' && Object.keys(req.body).length === 0);
+  const methodAllowsBody = ['POST', 'PUT', 'PATCH'].includes(method);
+  const hasBody =
+    methodAllowsBody
+    && req.body !== undefined
+    && req.body !== null
+    && req.body !== ''
+    && !(typeof req.body === 'object' && Object.keys(req.body).length === 0);
 
   let lastError;
   let lastResponse;
