@@ -20,6 +20,7 @@ export default async function handler(req, res) {
   const targetUrl = `${backendUrl}/api/${path}`;
 
   let lastError;
+  let lastResponse;
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
       const response = await axios({
@@ -38,6 +39,7 @@ export default async function handler(req, res) {
         return res.status(response.status).json(response.data);
       }
 
+      lastResponse = response;
       lastError = new Error(`Upstream returned ${response.status}`);
     } catch (error) {
       lastError = error;
@@ -46,6 +48,14 @@ export default async function handler(req, res) {
     if (attempt < 3) {
       await sleep(2000 * attempt);
     }
+  }
+
+  if (lastResponse) {
+    const payload =
+      typeof lastResponse.data === 'object' && lastResponse.data !== null
+        ? { ...lastResponse.data, target: targetUrl }
+        : { error: `Upstream returned ${lastResponse.status}`, target: targetUrl };
+    return res.status(lastResponse.status).json(payload);
   }
 
   const message = lastError?.response?.data?.error || lastError?.message || 'Proxy request failed';
