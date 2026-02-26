@@ -4,6 +4,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
+const { execSync } = require('child_process');
 
 const prisma = new PrismaClient();
 const app = express();
@@ -16,6 +17,13 @@ const asyncHandler = fn => (req, res, next) => Promise.resolve(fn(req, res, next
 
 // Run migrations on startup
 async function runMigrations() {
+  try {
+    console.log('[DB] Applying Prisma migrations...');
+    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+  } catch (e) {
+    console.warn('[DB] Migration step failed, continuing startup:', e.message);
+  }
+
   const maxAttempts = 6;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
