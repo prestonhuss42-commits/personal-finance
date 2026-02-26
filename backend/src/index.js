@@ -21,16 +21,17 @@ async function runMigrations() {
     try {
       await prisma.$executeRawUnsafe('SELECT 1');
       console.log('[DB] Database connection OK');
-      return;
+      return true;
     } catch (e) {
       if (attempt === maxAttempts) {
         console.error('[DB] Database not ready after retries:', e.message);
-        throw e;
+        return false;
       }
       console.log(`[DB] Waiting for database (${attempt}/${maxAttempts})...`);
       await new Promise(resolve => setTimeout(resolve, 2500));
     }
   }
+  return false;
 }
 
 function authMiddleware(req, res, next) {
@@ -112,12 +113,14 @@ const port = process.env.PORT || 4000;
 
 // Run migrations and start server
 (async () => {
-  await runMigrations();
+  const dbReady = await runMigrations();
+  if (!dbReady) {
+    console.warn('[DB] Starting API without an active DB connection. Auth/expense routes will fail until DB is reachable.');
+  }
   app.listen(port, () => {
     console.log(`[Server] Listening on port ${port}`);
     console.log(`[Server] API URL: http://localhost:${port}`);
   });
 })().catch(err => {
-  console.error('[Server] Startup error:', err);
-  process.exit(1);
+  console.error('[Server] Startup error (non-fatal):', err);
 });
