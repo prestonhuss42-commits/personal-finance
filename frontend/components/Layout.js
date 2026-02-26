@@ -15,7 +15,7 @@ export default function Layout({ children, title = 'Personal Finance', descripti
         />
       </Head>
       <header className="header">
-        <Link href="/" className="logo">💰 Finance</Link>
+        <Link href="/" className="logo">Finance</Link>
         <nav>
           <Link href="/">Home</Link>
           <Link href="/dashboard" style={{marginLeft:16}}>Dashboard</Link>

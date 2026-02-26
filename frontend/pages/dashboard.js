@@ -15,6 +15,7 @@ export default function Dashboard(){
   const [endDate,setEndDate]=useState('');
   const [filterCategory,setFilterCategory]=useState('');
   const [editingExpense,setEditingExpense]=useState(null);
+  const [submitting,setSubmitting]=useState(false);
 
   useEffect(()=>{ 
     const token = localStorage.getItem('token');
@@ -28,14 +29,24 @@ export default function Dashboard(){
   async function fetchExpenses(){
     const token = localStorage.getItem('token');
     if (!token) return;
-    const res = await axios.get('/api/proxy/expenses', { headers: { Authorization: `Bearer ${token}` } });
-    setExpenses(res.data);
+    try {
+      const res = await axios.get('/api/proxy/expenses', { headers: { Authorization: `Bearer ${token}` } });
+      setExpenses(res.data);
+    } catch (err) {
+      const message = err?.response?.data?.error || 'Failed to load expenses.';
+      alert(message);
+    }
   }
 
   async function deleteExpense(id){
     const token = localStorage.getItem('token');
-    await axios.delete(`/api/proxy/expenses/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-    fetchExpenses();
+    try {
+      await axios.delete(`/api/proxy/expenses/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      fetchExpenses();
+    } catch (err) {
+      const message = err?.response?.data?.error || 'Failed to delete expense.';
+      alert(message);
+    }
   }
 
   function getTotal(){
@@ -52,12 +63,21 @@ export default function Dashboard(){
 
   async function saveEdit(){
     if (!editingExpense) return;
-    if (!amount || Number(amount) <= 0) return alert('Enter a valid amount');
+    const parsedAmount = parseFloat(String(amount));
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) return alert('Enter a valid amount');
     if (!desc.trim()) return alert('Description required');
     const token = localStorage.getItem('token');
-    await axios.put(`/api/proxy/expenses/${editingExpense.id}`, { amount: Number(amount), description: desc, category }, { headers: { Authorization: `Bearer ${token}` } });
-    cancelEdit();
-    fetchExpenses();
+    try {
+      setSubmitting(true);
+      await axios.put(`/api/proxy/expenses/${editingExpense.id}`, { amount: parsedAmount, description: desc, category }, { headers: { Authorization: `Bearer ${token}` } });
+      cancelEdit();
+      fetchExpenses();
+    } catch (err) {
+      const message = err?.response?.data?.error || 'Failed to update expense.';
+      alert(message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function cancelEdit(){
@@ -68,12 +88,22 @@ export default function Dashboard(){
   }
 
   async function add(){
-    if (!amount || Number(amount) <= 0) return alert('Enter a valid amount');
+    const parsedAmount = parseFloat(String(amount));
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) return alert('Enter a valid amount');
     if (!desc.trim()) return alert('Description required');
     const token = localStorage.getItem('token');
-    await axios.post('/api/proxy/expenses', { amount: Number(amount), description: desc, category }, { headers: { Authorization: `Bearer ${token}` } });
-    setAmount(''); setDesc(''); setCategory('misc');
-    fetchExpenses();
+    try {
+      setSubmitting(true);
+      await axios.post('/api/proxy/expenses', { amount: parsedAmount, description: desc, category }, { headers: { Authorization: `Bearer ${token}` } });
+      setAmount(''); setDesc(''); setCategory('misc');
+      setStartDate(''); setEndDate(''); setFilterCategory('');
+      fetchExpenses();
+    } catch (err) {
+      const message = err?.response?.data?.error || 'Failed to add expense.';
+      alert(message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function getFilteredExpenses(){
@@ -110,7 +140,7 @@ export default function Dashboard(){
       <div className="container">
         <h1>Dashboard</h1>
       <div className="form">
-        <input placeholder="amount" value={amount} onChange={e=>setAmount(e.target.value)} />
+        <input type="number" step="0.01" min="0" placeholder="amount" value={amount} onChange={e=>setAmount(e.target.value)} />
         <input placeholder="description" value={desc} onChange={e=>setDesc(e.target.value)} />
         <select value={category} onChange={e=>setCategory(e.target.value)}>
           <option value="misc">Misc</option>
@@ -120,11 +150,11 @@ export default function Dashboard(){
         </select>
         {editingExpense ? (
           <>
-            <button onClick={saveEdit}>Update</button>
-            <button onClick={cancelEdit} style={{marginLeft:4}}>Cancel</button>
+            <button onClick={saveEdit} disabled={submitting}>{submitting ? 'Please wait...' : 'Update'}</button>
+            <button onClick={cancelEdit} style={{marginLeft:4}} disabled={submitting}>Cancel</button>
           </>
         ) : (
-          <button onClick={add}>Add</button>
+          <button onClick={add} disabled={submitting}>{submitting ? 'Please wait...' : 'Add'}</button>
         )}
       </div>
       {/* filter controls */}

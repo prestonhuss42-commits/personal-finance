@@ -65,7 +65,7 @@ export default function Home(){
       <div className="auth-card">
         <h1>Personal Finance</h1>
         <p>Track expenses, categorize and chart them.</p>
-        <p style={{fontSize:'0.9rem',color:'#555'}}>Built with Next.js, React, Express & Prisma (SQLite).<br/>This demo site is portfolio-ready – sign up and explore.</p>
+        <p style={{fontSize:'0.9rem',color:'#555'}}>Built with Next.js, React, Express & Prisma.</p>
         <input placeholder="email" value={email} onChange={e=>setEmail(e.target.value)} />
         <input placeholder="password" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
         <div style={{marginTop:10}}>
