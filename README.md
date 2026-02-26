@@ -1,13 +1,16 @@
 # Personal Finance Dashboard
 
-full-stack personal finance dashboard showing authentication, CRUD expenses, charts, and an API. 
+Full-stack personal finance dashboard with authentication, expense CRUD, filtering, summaries, and chart visualization.
 
+## Live Demo
+- Frontend: https://personal-finance-one-tau.vercel.app
+- Backend API: https://personal-finance-e23w.onrender.com
 
-**[📘 Deployment Guide →](./DEPLOYMENT.md)** For production deployment to Railway (backend) and Vercel (frontend).
+**[Deployment Guide](./DEPLOYMENT.md)** for production deployment setup.
 
-Tech:
-- Backend: Node.js, Express, Prisma (SQLite by default, PostgreSQL for production)
-- Frontend: Next.js + React
+## Tech Stack
+- Backend: Node.js, Express, Prisma, PostgreSQL
+- Frontend: Next.js, React, Axios, Chart.js
 
 Quick start (development):
 
@@ -41,13 +44,10 @@ npm run dev
 > ```
 
 Environment variables:
-- Backend: copy `backend/.env.example` to `.env` and set `JWT_SECRET` and `DATABASE_URL` (SQLite default included)
+- Backend: set `JWT_SECRET` and `DATABASE_URL`
+- Frontend: set `NEXT_PUBLIC_API_URL` (if not using the built-in proxy default)
 
-Notes:
-- Swap SQLite for PostgreSQL by changing `DATABASE_URL` in `.env` and updating Prisma provider.
-- This is a starter scaffold — extend roles, validations, UI, and tests as needed.
-
-## Additional features added
+## Features
 - Expense categories with dropdown when adding
 - Edit and delete buttons for each item (via inline form instead of prompts)
 - Add/edit form reuses same inputs with update/cancel logic
@@ -61,4 +61,6 @@ Notes:
 - Chart now aggregates expenses by date (daily totals)
 - Expense listing shows date, category badge, and improved list styling
 
-Feel free to continue building filters, summaries, and better UI.d.
+## Notes
+- API requests are routed through a Next.js proxy endpoint for improved deployment reliability.
+- The backend auto-validates DB connectivity on startup and returns clear API errors for easier troubleshooting.

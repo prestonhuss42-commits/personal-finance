@@ -22,7 +22,7 @@ export default function Layout({ children, title = 'Personal Finance', descripti
         </nav>
       </header>
       <main className="container">{children}</main>
-      <footer className="footer">Built with Next.js &amp; Express | <a href="https://github.com/yourusername/personal-finance" target="_blank" rel="noopener noreferrer">Source</a></footer>
+      <footer className="footer">Built with Next.js &amp; Express | <a href="https://github.com/prestonhuss42-commits/personal-finance" target="_blank" rel="noopener noreferrer">Source</a></footer>
     </>
   );
 }
