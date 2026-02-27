@@ -36,6 +36,16 @@ app.add_middleware(
 app.include_router(recommendation_router)
 
 
+@app.get("/")
+def root():
+    return {
+        "message": "Movie Recommender API is running",
+        "docs": "/docs",
+        "health": "/health",
+        "recommend_example": "/recommend/1",
+    }
+
+
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
