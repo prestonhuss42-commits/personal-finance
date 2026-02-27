@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+node_modules/
+dist/
+artifacts/*.joblib
+data/raw/ml-latest-small/
+data/raw/ml-latest-small.zip
+movie_recommender.db
