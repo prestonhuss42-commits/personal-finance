@@ -6,6 +6,11 @@ const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 const { execSync } = require('child_process');
 
+if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres') && !process.env.DATABASE_URL.includes('sslmode=')) {
+  const separator = process.env.DATABASE_URL.includes('?') ? '&' : '?';
+  process.env.DATABASE_URL = `${process.env.DATABASE_URL}${separator}sslmode=require`;
+}
+
 let prisma = new PrismaClient();
 const app = express();
 app.use(cors());
