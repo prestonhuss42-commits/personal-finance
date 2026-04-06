@@ -2,6 +2,12 @@
 
 Full-stack personal finance dashboard with authentication, expense CRUD, filtering, summaries, and chart visualization.
 
+## Demo
+
+<video src="./assets/demo.mp4" controls width="900"></video>
+
+[Download demo video](./assets/demo.mp4)
+
 ## Project Type
 - Local development project (no live hosting required)
 - Clone and run on your machine using the setup steps below
