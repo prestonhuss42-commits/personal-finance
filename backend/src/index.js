@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 const { execSync } = require('child_process');
 
-const prisma = new PrismaClient();
+let prisma = new PrismaClient();
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -14,6 +14,38 @@ app.use(express.json());
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 
 const asyncHandler = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+
+function isClosedConnectionError(error) {
+  const message = error?.message || '';
+  return (
+    message.includes('Server has closed the connection')
+    || message.includes("Can't reach database server")
+    || message.includes('Connection terminated unexpectedly')
+  );
+}
+
+async function reconnectPrisma() {
+  try {
+    await prisma.$disconnect();
+  } catch (_) {
+    // ignore disconnect failures while recovering connection
+  }
+  prisma = new PrismaClient();
+  await prisma.$connect();
+}
+
+async function withDbRetry(operation) {
+  try {
+    return await operation();
+  } catch (error) {
+    if (!isClosedConnectionError(error)) {
+      throw error;
+    }
+    console.warn('[DB] Connection dropped, reconnecting Prisma client...');
+    await reconnectPrisma();
+    return operation();
+  }
+}
 
 // Run migrations on startup
 async function runMigrations() {
@@ -27,7 +59,7 @@ async function runMigrations() {
   const maxAttempts = 6;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
-      await prisma.$executeRawUnsafe('SELECT 1');
+      await withDbRetry(() => prisma.$executeRawUnsafe('SELECT 1'));
       console.log('[DB] Database connection OK');
       return true;
     } catch (e) {
@@ -44,7 +76,7 @@ async function runMigrations() {
 
 async function ensureTables() {
   try {
-    await prisma.$executeRawUnsafe(`
+    await withDbRetry(() => prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "User" (
         "id" SERIAL PRIMARY KEY,
         "email" TEXT NOT NULL UNIQUE,
@@ -53,9 +85,9 @@ async function ensureTables() {
         "role" TEXT NOT NULL DEFAULT 'user',
         "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
-    `);
+    `));
 
-    await prisma.$executeRawUnsafe(`
+    await withDbRetry(() => prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "Expense" (
         "id" SERIAL PRIMARY KEY,
         "userId" INTEGER NOT NULL REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
@@ -64,11 +96,11 @@ async function ensureTables() {
         "category" TEXT NOT NULL,
         "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
-    `);
+    `));
 
-    await prisma.$executeRawUnsafe(`
+    await withDbRetry(() => prisma.$executeRawUnsafe(`
       CREATE INDEX IF NOT EXISTS "Expense_userId_idx" ON "Expense"("userId");
-    `);
+    `));
 
     console.log('[DB] Required tables verified');
   } catch (e) {
@@ -92,17 +124,17 @@ function authMiddleware(req, res, next) {
 app.post('/api/auth/register', asyncHandler(async (req, res) => {
   const { email, password, name } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Missing fields' });
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const existing = await withDbRetry(() => prisma.user.findUnique({ where: { email } }));
   if (existing) return res.status(400).json({ error: 'Email already in use' });
   const hash = await bcrypt.hash(password, 10);
-  const user = await prisma.user.create({ data: { email, password: hash, name } });
+  const user = await withDbRetry(() => prisma.user.create({ data: { email, password: hash, name } }));
   const token = jwt.sign({ userId: user.id }, JWT_SECRET);
   res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
 }));
 
 app.post('/api/auth/login', asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await withDbRetry(() => prisma.user.findUnique({ where: { email } }));
   if (!user) return res.status(400).json({ error: 'Invalid credentials' });
   const ok = await bcrypt.compare(password, user.password);
   if (!ok) return res.status(400).json({ error: 'Invalid credentials' });
@@ -111,31 +143,31 @@ app.post('/api/auth/login', asyncHandler(async (req, res) => {
 }));
 
 app.get('/api/expenses', authMiddleware, asyncHandler(async (req, res) => {
-  const expenses = await prisma.expense.findMany({ where: { userId: req.userId }, orderBy: { createdAt: 'desc' } });
+  const expenses = await withDbRetry(() => prisma.expense.findMany({ where: { userId: req.userId }, orderBy: { createdAt: 'desc' } }));
   res.json(expenses);
 }));
 
 app.post('/api/expenses', authMiddleware, asyncHandler(async (req, res) => {
   const { amount, description, category } = req.body;
   if (typeof amount !== 'number') return res.status(400).json({ error: 'Invalid amount' });
-  const expense = await prisma.expense.create({ data: { userId: req.userId, amount, description: description || '', category: category || 'other' } });
+  const expense = await withDbRetry(() => prisma.expense.create({ data: { userId: req.userId, amount, description: description || '', category: category || 'other' } }));
   res.json(expense);
 }));
 
 app.put('/api/expenses/:id', authMiddleware, asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
-  const existing = await prisma.expense.findUnique({ where: { id } });
+  const existing = await withDbRetry(() => prisma.expense.findUnique({ where: { id } }));
   if (!existing || existing.userId !== req.userId) return res.status(404).json({ error: 'Not found' });
   const { amount, description, category } = req.body;
-  const updated = await prisma.expense.update({ where: { id }, data: { amount, description, category } });
+  const updated = await withDbRetry(() => prisma.expense.update({ where: { id }, data: { amount, description, category } }));
   res.json(updated);
 }));
 
 app.delete('/api/expenses/:id', authMiddleware, asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
-  const existing = await prisma.expense.findUnique({ where: { id } });
+  const existing = await withDbRetry(() => prisma.expense.findUnique({ where: { id } }));
   if (!existing || existing.userId !== req.userId) return res.status(404).json({ error: 'Not found' });
-  await prisma.expense.delete({ where: { id } });
+  await withDbRetry(() => prisma.expense.delete({ where: { id } }));
   res.json({ success: true });
 }));
 
