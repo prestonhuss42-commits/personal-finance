@@ -2,11 +2,9 @@
 
 Full-stack personal finance dashboard with authentication, expense CRUD, filtering, summaries, and chart visualization.
 
-## Live Demo
-- Frontend: https://personal-finance-one-tau.vercel.app
-- Backend API: https://personal-finance-e23w.onrender.com
-
-**[Deployment Guide](./DEPLOYMENT.md)** for production deployment setup.
+## Project Type
+- Local development project (no live hosting required)
+- Clone and run on your machine using the setup steps below
 
 ## Tech Stack
 - Backend: Node.js, Express, Prisma, PostgreSQL
@@ -62,5 +60,5 @@ Environment variables:
 - Expense listing shows date, category badge, and improved list styling
 
 ## Notes
-- API requests are routed through a Next.js proxy endpoint for improved deployment reliability.
-- The backend auto-validates DB connectivity on startup and returns clear API errors for easier troubleshooting.
+- API requests are routed through a Next.js proxy endpoint.
+- This repository is intended for local execution and code review.
