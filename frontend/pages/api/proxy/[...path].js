@@ -1,13 +1,11 @@
 import axios from 'axios';
 
-const DEFAULT_BACKEND_URL = 'https://personal-finance-e23w.onrender.com';
+const DEFAULT_BACKEND_URL = 'http://localhost:4000';
 
 function getBackendUrl() {
   const configured = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL;
   if (!configured) return DEFAULT_BACKEND_URL;
-  const normalized = configured.replace(/\/$/, '');
-  if (normalized.includes('localhost')) return DEFAULT_BACKEND_URL;
-  return normalized;
+  return configured.replace(/\/$/, '');
 }
 
 function sleep(ms) {
