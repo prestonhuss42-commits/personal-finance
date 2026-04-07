@@ -6,9 +6,12 @@ const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 const { execSync } = require('child_process');
 
-if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres') && !process.env.DATABASE_URL.includes('sslmode=')) {
-  const separator = process.env.DATABASE_URL.includes('?') ? '&' : '?';
-  process.env.DATABASE_URL = `${process.env.DATABASE_URL}${separator}sslmode=require`;
+const databaseUrl = process.env.DATABASE_URL || '';
+const isSqlite = databaseUrl.startsWith('file:');
+
+if (databaseUrl && databaseUrl.startsWith('postgres') && !databaseUrl.includes('sslmode=')) {
+  const separator = databaseUrl.includes('?') ? '&' : '?';
+  process.env.DATABASE_URL = `${databaseUrl}${separator}sslmode=require`;
 }
 
 let prisma = new PrismaClient();
@@ -80,6 +83,11 @@ async function runMigrations() {
 }
 
 async function ensureTables() {
+  if (isSqlite) {
+    // SQLite schema is managed by Prisma migrations in local dev.
+    return;
+  }
+
   try {
     await withDbRetry(() => prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "User" (

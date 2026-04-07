@@ -13,7 +13,7 @@ Full-stack personal finance dashboard with authentication, expense CRUD, filteri
 - Clone and run on your machine using the setup steps below
 
 ## Tech Stack
-- Backend: Node.js, Express, Prisma, PostgreSQL
+- Backend: Node.js, Express, Prisma, SQLite (local)
 - Frontend: Next.js, React, Axios, Chart.js
 
 Quick start (development):
@@ -23,14 +23,21 @@ Quick start (development):
 ```bash
 cd backend
 npm install
-# generate prisma client and run migrations
+# create local env file (one time)
+cp .env.example .env
+# run migrations and seed demo data
 npx prisma migrate dev --name init
-# optionally seed demo user/data
 node seed.js
 npm run dev
 ```
 
-   > demo account: **demo@example.com / demo**
+On Windows PowerShell, use this once instead of `cp`:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Demo account: **demo@example.com / demo**
 
 2. Frontend
 
@@ -38,6 +45,22 @@ npm run dev
 cd frontend
 npm install
 npm run dev
+```
+
+Windows PowerShell (execution policy safe):
+
+```powershell
+cd backend
+npm.cmd install
+Copy-Item .env.example .env
+npx.cmd prisma migrate dev --name init
+node seed.js
+npm.cmd run dev
+
+# in a second terminal
+cd frontend
+npm.cmd install
+npm.cmd run dev
 ```
 
 > **Windows PowerShell users:** if you see an error about scripts being disabled (`npm.ps1 cannot be loaded`), either run PowerShell as admin and execute `Set-ExecutionPolicy RemoteSigned` or start the servers directly with Node:
@@ -48,7 +71,7 @@ npm run dev
 > ```
 
 Environment variables:
-- Backend: set `JWT_SECRET` and `DATABASE_URL`
+- Backend: copy `backend/.env.example` to `backend/.env`
 - Frontend: set `NEXT_PUBLIC_API_URL` (if not using the built-in proxy default)
 
 ## Features
